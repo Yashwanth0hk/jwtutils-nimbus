@@ -1,0 +1,90 @@
+java -cp jasypt-1.9.3.jar org.jasypt.intf.cli.JasyptPBEStringEncryptionCLI \
+  input="MySecret123" \
+  password="my-encryption-password" \
+  algorithm=PBEWithHmacSHA512AndAES_256 \
+  ivGeneratorClassName=org.jasypt.iv.RandomIvGenerator
+  
+
+java -cp jasypt-1.9.3.jar org.jasypt.intf.cli.JasyptPBEStringEncryptionCLI input="LjoDPnF7vc9UrEdpK+Cmr9YcidA9lZbGwWvpvdcZ4kGkC5lm77eg3lHVmuV9j8V7" password="my-encryption-password" algorithm=PBEWithHmacSHA512AndAES_256 ivGeneratorClassName=org.jasypt.iv.RandomIvGenerator
+
+java -cp jasypt-1.9.3.jar org.jasypt.intf.cli.JasyptPBEStringEncryptionCLI input=ENC(LjoDPnF7vc9UrEdpK+Cmr9YcidA9lZbGwWvpvdcZ4kGkC5lm77eg3lHVmuV9j8V7) password="my-encryption-password" algorithm=PBEWithHmacSHA512AndAES_256 ivGeneratorClassName=org.jasypt.iv.RandomIvGenerator --decrypt
+
+
+java -cp jasypt-1.9.3.jar org.jasypt.intf.cli.JasyptPBEStringEncryptionCLI \
+  input="LjoDPnF7vc9UrEdpK+Cmr9YcidA9lZbGwWvpvdcZ4kGkC5lm77eg3lHVmuV9j8V7" \
+  password="my-encryption-password" \
+  algorithm=PBEWithHmacSHA512AndAES_256 \
+  ivGeneratorClassName=org.jasypt.iv.RandomIvGenerator \
+  --decrypt
+
+
+
+
+mvn jasypt:decrypt-value -Djasypt.encryptor.password=javatechie -Djasypt.plugin.value=nObqvmVPYhxVaykMl09QVtGCQWjpd7al1RJhOsyz1eLkb6J2USMu9Fb//e4a6Vro
+
+# Your encrypted property
+my.secret.password=ENC(K4DFgsyg34vXqbnNw89===)
+
+# Jasypt configuration
+jasypt.encryptor.password=${JASYPT_ENCRYPTOR_PASSWORD}  # use env var
+jasypt.encryptor.algorithm=PBEWithHmacSHA512AndAES_256
+jasypt.encryptor.iv-generator-classname=org.jasypt.iv.RandomIvGenerator
+jasypt.encryptor.pool-size=1
+
+export JASYPT_ENCRYPTOR_PASSWORD=my-encryption-password
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+import javax.annotation.PostConstruct;
+
+@Component
+public class SecretPrinter {
+
+    @Value("${my.secret.password}")
+    private String secretPassword;
+
+    @PostConstruct
+    public void printDecrypted() {
+        System.out.println("Decrypted password: " + secretPassword);
+    }
+}
+
+
+java -Djasypt.encryptor.password=my-secret-key -jar target/app.jar
+
+
+import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
+import org.jasypt.iv.RandomIvGenerator;
+
+public class ManualEncryptionDemo {
+
+    public static void main(String[] args) {
+        // 👇 The password you use to encrypt/decrypt
+        String secretKey = "my-secret-key";
+
+        // 👇 The plain text to encrypt
+        String originalValue = "MySecret123";
+
+        // 🔐 Create encryptor and configure it
+        StandardPBEStringEncryptor encryptor = new StandardPBEStringEncryptor();
+        encryptor.setPassword(secretKey);
+        encryptor.setAlgorithm("PBEWithHmacSHA512AndAES_256");
+        encryptor.setIvGenerator(new RandomIvGenerator());
+
+        // ➕ Encrypt the plain text
+        String encryptedValue = encryptor.encrypt(originalValue);
+        System.out.println("Encrypted: ENC(" + encryptedValue + ")");
+
+        // ➖ Decrypt the same value
+        String decryptedValue = encryptor.decrypt(encryptedValue);
+        System.out.println("Decrypted: " + decryptedValue);
+    }
+}
+
+
+mvn jasypt:encrypt-value -Djasypt.encryptor.password=mySecretPassword -Djasypt.plugin.value="MySecret123" -Djasypt.encryptor.algorithm=PBEWithHmacSHA512AndAES_256   -Djasypt.encryptor.ivGeneratorClassName=org.jasypt.iv.RandomIvGenerator
+
+
+mvn jasypt:decrypt-value -Djasypt.encryptor.password=mySecretPassword -Djasypt.plugin.value="TF6SezrSBtVyMKaKHFrzPrCg1esg39GMKCnkwIdndpOr6sozR9tf9w3gmGKntDsI" -Djasypt.encryptor.algorithm=PBEWithHmacSHA512AndAES_256 -Djasypt.encryptor.ivGeneratorClassName=org.jasypt.iv.RandomIvGenerator
+
