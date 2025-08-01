@@ -88,3 +88,13 @@ mvn jasypt:encrypt-value -Djasypt.encryptor.password=mySecretPassword -Djasypt.p
 
 mvn jasypt:decrypt-value -Djasypt.encryptor.password=mySecretPassword -Djasypt.plugin.value="TF6SezrSBtVyMKaKHFrzPrCg1esg39GMKCnkwIdndpOr6sozR9tf9w3gmGKntDsI" -Djasypt.encryptor.algorithm=PBEWithHmacSHA512AndAES_256 -Djasypt.encryptor.ivGeneratorClassName=org.jasypt.iv.RandomIvGenerator
 
+java -Djasypt.encryptor.password=mySecretKey \
+     -Djasypt.encryptor.algorithm=PBEWithHmacSHA512AndAES_256 \
+     -Djasypt.encryptor.iv-generator-classname=org.jasypt.iv.RandomIvGenerator \
+     -jar your-app.jar
+
+mvn spring-boot:run \
+  -Djasypt.encryptor.password=mySecretKey \
+  -Djasypt.encryptor.algorithm=PBEWithHmacSHA512AndAES_256 \
+  -Djasypt.encryptor.iv-generator-classname=org.jasypt.iv.RandomIvGenerator
+
