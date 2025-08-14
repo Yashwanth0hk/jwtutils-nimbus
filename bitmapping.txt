@@ -1,0 +1,136 @@
+// Enum representing various user privileges, each assigned a unique bit position
+public enum Privilege {
+    READ_USERS(0),      // Bit 0
+    WRITE_USERS(1),     // Bit 1
+    DELETE_USERS(2),    // Bit 2
+    READ_REPORTS(3);    // Bit 3
+
+    // The bit position assigned to this privilege
+    private final int bit;
+
+    // Constructor assigns the bit position
+    Privilege(int bit) {
+        this.bit = bit;
+    }
+
+    // Getter for the bit position
+    public int getBit() {
+        return bit;
+    }
+}
+
+import java.util.BitSet;
+import java.util.EnumSet;
+import java.util.Set;
+
+public class PrivilegeUtils {
+
+    /**
+     * Converts a Set of Privileges to a BitSet.
+     * Each privilege sets the corresponding bit in the BitSet based on its ordinal.
+     * 
+     * @param privileges the set of privileges to convert
+     * @return BitSet with bits set for each privilege present
+     */
+    public static BitSet toBitSet(Set<Privilege> privileges) {
+        BitSet bitSet = new BitSet();
+        for (Privilege p : privileges) {
+            // Use ordinal to map privilege to bit index in BitSet
+            bitSet.set(p.ordinal());
+        }
+        return bitSet;
+    }
+
+    /**
+     * Converts a BitSet back to a Set of Privileges.
+     * Iterates over all set bits in the BitSet and adds corresponding Privilege enums.
+     * 
+     * @param bitSet the BitSet representing privileges
+     * @return Set of privileges corresponding to bits set in the BitSet
+     */
+    public static Set<Privilege> fromBitSet(BitSet bitSet) {
+        Set<Privilege> result = EnumSet.noneOf(Privilege.class);
+        // Iterate over all bits set to true in the BitSet
+        for (int i = bitSet.nextSetBit(0); i >= 0; i = bitSet.nextSetBit(i + 1)) {
+            result.add(Privilege.values()[i]);
+        }
+        return result;
+    }
+}
+
+import java.util.Base64;
+import java.util.BitSet;
+
+public class BitSetConverter {
+
+    /**
+     * Encodes a BitSet into a URL-safe Base64 string without padding.
+     * 
+     * @param bitSet the BitSet to encode
+     * @return Base64-encoded string representation of the BitSet
+     */
+    public static String bitSetToBase64(BitSet bitSet) {
+        byte[] bytes = bitSet.toByteArray(); // Convert BitSet to byte array
+        // Encode bytes to Base64 URL-safe string without padding
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+    }
+
+    /**
+     * Decodes a Base64 string back into a BitSet.
+     * 
+     * @param base64 the Base64-encoded string representing the BitSet
+     * @return decoded BitSet
+     */
+    public static BitSet base64ToBitSet(String base64) {
+        byte[] bytes = Base64.getUrlDecoder().decode(base64); // Decode Base64 string to bytes
+        return BitSet.valueOf(bytes); // Convert bytes back to BitSet
+    }
+}
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+
+import java.util.BitSet;
+import java.util.Set;
+
+public class JwtExample {
+
+    // Secret key used for signing and verifying JWTs
+    private static final String SECRET = "mySuperSecretKey12345";
+
+    public static void main(String[] args) {
+        // Define a sample set of user privileges
+        Set<Privilege> userPrivileges = Set.of(Privilege.READ_USERS, Privilege.DELETE_USERS);
+
+        // Convert privileges to BitSet, then encode as Base64 string
+        BitSet bits = PrivilegeUtils.toBitSet(userPrivileges);
+        String encodedBits = BitSetConverter.bitSetToBase64(bits);
+        System.out.println("Encoded privileges Base64: " + encodedBits);
+
+        // Create JWT token containing the Base64-encoded privileges as a claim
+        String jwt = Jwts.builder()
+                .setSubject("user123")             // Set user identifier as subject
+                .claim("priv", encodedBits)        // Add privileges claim as Base64 string
+                .signWith(SignatureAlgorithm.HS256, SECRET.getBytes()) // Sign with secret key
+                .compact();
+
+        System.out.println("JWT token:\n" + jwt);
+
+        // Parse and validate the JWT token, extracting claims
+        Claims claims = Jwts.parser()
+                .setSigningKey(SECRET.getBytes())  // Use the same secret key for verification
+                .parseClaimsJws(jwt)                // Parse the JWT string
+                .getBody();
+
+        // Extract the Base64-encoded privileges claim from JWT claims
+        String privBase64 = claims.get("priv", String.class);
+        // Decode Base64 string back to BitSet
+        BitSet decodedBits = BitSetConverter.base64ToBitSet(privBase64);
+        // Convert BitSet back to a set of Privilege enums
+        Set<Privilege> decodedPrivileges = PrivilegeUtils.fromBitSet(decodedBits);
+
+        // Output the decoded privileges to verify correctness
+        System.out.println("Decoded privileges: " + decodedPrivileges);
+    }
+}
